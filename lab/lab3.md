@@ -78,7 +78,7 @@ Za potrebe ove vježbe koristit ćemo Python 3 i sljedeće python pakete:
 - numpy
 
 Nakon što ste se uvjerili da imate sve potrebne pakete,
-preuzmite kostur rješenja vježbe sa [githuba](https://github.com/cvunizg/cvunizg-lab3-faster).
+preuzmite kostur rješenja vježbe sa [githuba](https://github.com/UNIZG-FER-D307/compvis-lab3-faster).
 Zatim unutar repozitorija stvorite novi direktorij `data`
 i unutar njega raspakirajte sadržaj ovog [direktorija](https://www.dropbox.com/sh/wbybqchx98wg8ci/AAA_2KlewTokFc2OY-fC0_wna?dl=0).
 Preuzeta datoteka sadrži spremljene međurezultate unaprijednog prolaza razmatranog modela 
