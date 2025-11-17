@@ -10,7 +10,7 @@ description: Popis predavanja.
 3. Detekcija rubova i kuteva [pdf](https://github.com/UNIZG-FER-D307/compvis/blob/main/assets/lectures/03_det_rub_kut.pdf)
 4. Ključne točke u prostoru mjerila [pdf](https://github.com/UNIZG-FER-D307/compvis/blob/main/assets/lectures/04_sift.pdf)
 5. Analiza kretanja u slikovnoj ravnini [pdf](https://github.com/UNIZG-FER-D307/compvis/blob/main/assets/lectures/05_motion.pdf)
-6. Diskusija: [viola04ijcv] Robust Real-Time Face Detection [pdf](https://link.springer.com/content/pdf/10.1023/B:VISI.0000013087.49260.fb.pdf)
+6. Diskusija: [viola04ijcv] Robust Real-Time Face Detection [pdf](https://github.com/UNIZG-FER-D307/compvis/blob/main/assets/lectures/06_violajones.pdf), [viola04ijcv](https://link.springer.com/content/pdf/10.1023/B:VISI.0000013087.49260.fb.pdf)
 7. Diskusija: [hirschmuller07tpami] Stereo Processing by Semiglobal Matching and Mutual Information [pdf](https://core.ac.uk/download/pdf/11134866.pdf)
 8. (međuispit)
 9. (međuispit)
