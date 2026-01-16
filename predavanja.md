@@ -18,5 +18,5 @@ description: Popis predavanja.
 11. Detekcija objekata i semantička segmentacija [pdf](https://github.com/UNIZG-FER-D307/compvis/blob/main/assets/lectures/11_dense_recognition.pdf)
 12. Generativni modeli slika [pdf](https://github.com/UNIZG-FER-D307/compvis/blob/main/assets/lectures/12_generative_models.pdf)
 13. Duboki modeli utemeljeni na pažnji [pdf](http://www.zemris.fer.hr/~ssegvic/vision/cv_trafo.pdf)
-14. Diskusija: [zhang17iclr] Understanding deep learning requires rethinking generalization [pdf](https://arxiv.org/abs/1611.03530)
-15. Diskusija: [he22cvpr] Masked Autoencoders Are Scalable Vision Learners [pdf](https://arxiv.org/abs/2111.06377)
+14. Diskusija: [caron21iccv] Emerging Properties in Self-Supervised Vision Transformers [pdf](https://openaccess.thecvf.com/content/ICCV2021/papers/Caron_Emerging_Properties_in_Self-Supervised_Vision_Transformers_ICCV_2021_paper.pdf)
+15. Diskusija: TBD
