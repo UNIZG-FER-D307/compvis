@@ -19,4 +19,4 @@ description: Popis predavanja.
 12. Generativni modeli slika [pdf](https://github.com/UNIZG-FER-D307/compvis/blob/main/assets/lectures/12_generative_models.pdf)
 13. Duboki modeli utemeljeni na pažnji [pdf](http://www.zemris.fer.hr/~ssegvic/vision/cv_trafo.pdf)
 14. Diskusija: [caron21iccv] Emerging Properties in Self-Supervised Vision Transformers [pdf](https://openaccess.thecvf.com/content/ICCV2021/papers/Caron_Emerging_Properties_in_Self-Supervised_Vision_Transformers_ICCV_2021_paper.pdf)
-15. Diskusija: TBD
+15. Diskusija: [radford21pmlr] Learning Transferable Visual Models From Natural Language Supervision [pdf](https://proceedings.mlr.press/v139/radford21a/radford21a.pdf)
