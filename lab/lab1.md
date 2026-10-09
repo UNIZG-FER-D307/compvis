@@ -477,8 +477,10 @@ te zadržava samo piksele
 a ostale postavlja na nulu:
 
 $$I_e(x, y) =
-  \cases{ m(x, y) & ; \ m(x, y) \geq \theta \cr
-          0       & ; \ \mathrm{inače} }$$
+  \begin{cases}
+    m(x, y), & \text{ako je } m(x, y) \geq \theta \\
+    0,       & \text{inače}
+  \end{cases}$$
 
 Prije uspoređivanja s pragom
 normalizirajte iznos gradijenta na interval $$[0, 255]$$,
