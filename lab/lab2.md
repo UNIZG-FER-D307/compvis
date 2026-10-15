@@ -38,13 +38,13 @@ s koordinatama `(x, y)` u svakom retku.
 
 Ispitne slike:
 slika rakuna iz paketa `scipy.datasets` te
-slike `fer_logo.jpg`, `house.jpg`, `fer_building.jpg`
+slike `fer_logo.jpg`, `house.jpg`, `fer_building_mo.jpg`
 i par fotografija akvadukta Pont du Gard:
 
 <img src="../../assets/images/lab2/fer_logo.jpg" alt="FER logo" width="300"/>
 <img src="../../assets/images/lab2/house.jpg" alt="house" width="200"/>
-<img src="../../assets/images/lab2/fer_building.jpg" alt="Zgrada FER-a" width="300"/>
-<br/><em>Slika 1. Ispitne slike `fer_logo.jpg`, `house.jpg` i `fer_building.jpg`.</em>
+<img src="../../assets/images/lab2/fer_building_mo.jpg" alt="Zgrada FER-a" width="150"/>
+<br/><em>Slika 1. Ispitne slike `fer_logo.jpg`, `house.jpg` i `fer_building_mo.jpg`.</em>
 
 <div style="display: flex; gap: 8px; max-width: 640px;">
   <img src="../../assets/images/lab2/pont_du_gard_1.jpg" alt="Pont du Gard 1" style="flex: 623; min-width: 0; width: 0; height: auto;"/>
@@ -55,7 +55,7 @@ i par fotografija akvadukta Pont du Gard:
 
 [fer_logo.jpg](../assets/images/lab2/fer_logo.jpg),
 [house.jpg](../assets/images/lab2/house.jpg),
-[fer_building.jpg](../assets/images/lab2/fer_building.jpg),
+[fer_building_mo.jpg](../assets/images/lab2/fer_building_mo.jpg),
 [pont_du_gard_1.jpg](../assets/images/lab2/pont_du_gard_1.jpg),
 [pont_du_gard_2.jpg](../assets/images/lab2/pont_du_gard_2.jpg)
 (fotografije akvadukta preuzete su iz repozitorija
@@ -385,18 +385,22 @@ Homografija opisuje preslikavanje između dviju ravnina,
 pa je možemo iskoristiti i za umetanje digitalnih slika
 na ravne površine u stvarnoj fotografiji, poput zida, plakata ili zaslona.
 Projekcijsku deformaciju iskoristit ćemo za umetanje FER loga
-na desni zid zgrade B (`fer_building.jpg`).
-Na zidu smo odabrali četiri točke
+na zgradu FER-a (`fer_building_mo.jpg`).
+Logo ćemo umetnuti na tri ploče, a za svaku smo odabrali četiri točke
 (gornji lijevi, gornji desni, donji desni i donji lijevi kut):
 
 ```python
-Qd = np.array([[526, 111], [649, 169], [658, 250], [534, 200]], float)
+panels = [
+    np.array([[125, 1197], [330, 1225], [313, 1331], [94, 1308]], float),
+    np.array([[529, 1251], [705, 1274], [708, 1374], [521, 1354]], float),
+    np.array([[879, 1296], [1036, 1319], [1050, 1415], [889, 1396]], float),
+]
 ```
 
-Za izvorišne točke uzmite odgovarajuće kutove slike loga
-te funkcijom `recover_projective` procijenite homografiju
-koja točke na zidu preslikava u točke loga.
-Logo zatim umetnite sljedećom funkcijom,
+Za izvorišne točke uzmite odgovarajuće kutove slike loga.
+Za svaku ploču funkcijom `recover_projective` procijenite homografiju
+koja točke ploče preslikava u točke loga
+te logo umetnite sljedećom funkcijom,
 koja deformira logo funkcijom `cv2.warpPerspective`
 i u fotografiju upisuje samo njegove tamne piksele:
 
@@ -412,10 +416,13 @@ def paste_logo(img, logo, H, threshold=128):
     return out
 ```
 
+Logo na sljedeću ploču umećite u rezultat prethodnog umetanja,
+tako da na kraju sva tri loga budu na istoj fotografiji.
+
 Primjer:
 
-![FER logo umetnut na zid zgrade FER-a projekcijskom deformacijom.](../assets/images/lab2/fer_logo_wall.jpg)
-<br/><em>Slika 7. Fotografija zgrade FER-a s odabranim točkama na zidu i rezultat umetanja FER loga.</em>
+<img src="../../assets/images/lab2/fer_logo_wall.jpg" alt="FER logo umetnut na tri ploče pročelja zgrade FER-a projekcijskom deformacijom." width="400"/>
+<br/><em>Slika 7. Fotografija zgrade FER-a s umetnutim logom.</em>
 
 ## Zadatak 3: Harrisov detektor kutova
 

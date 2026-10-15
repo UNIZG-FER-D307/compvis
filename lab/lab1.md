@@ -85,8 +85,6 @@ sprema je na disk, ponovno je učitava iz datoteke
 i prikazuje na zaslonu.
 Paket `scipy.datasets` sliku preuzima s interneta
 pri prvom pozivu.
-Napominjemo da starija funkcija `scipy.misc.face()`
-nije dostupna u novijim verzijama SciPyja.
 
 ```
 import numpy as np
