@@ -1,8 +1,9 @@
 ---
 name: Siniša Šegvić
-lectures: true
+leads: false
+lectures: false
 labs: false
-email: sinisa.segvic@fer.hr
+memoriam: true
 website: http://www.zemris.fer.hr/~ssegvic/
 photo: sinisa.jpg
 ---
