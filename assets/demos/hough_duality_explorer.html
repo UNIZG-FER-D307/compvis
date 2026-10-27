@@ -1,0 +1,808 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Hough Duality Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --paper: #f3f5f8;
+  --panel: #ffffff;
+  --ink: #18202d;
+  --muted: #596377;
+  --line: #d9dee7;
+  --grid: #e8ecf2;
+  --axis: #98a1b1;
+  --accent: #1d5bb8;
+  --probe: #c9431b;
+  --heat: 29, 91, 184;
+  --pt-s: 68%;
+  --pt-l: 43%;
+  --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f131a; --panel: #161b24; --ink: #e5e9f0; --muted: #98a2b4;
+    --line: #2a3240; --grid: #212836; --axis: #576274; --accent: #78a8ff;
+    --probe: #ff8a5b; --heat: 120, 168, 255; --pt-s: 75%; --pt-l: 66%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f131a; --panel: #161b24; --ink: #e5e9f0; --muted: #98a2b4;
+  --line: #2a3240; --grid: #212836; --axis: #576274; --accent: #78a8ff;
+  --probe: #ff8a5b; --heat: 120, 168, 255; --pt-s: 75%; --pt-l: 66%;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--body);
+  font-size: 14px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1240px; margin: 0 auto;
+  padding-block: 20px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 16px;
+}
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+h1 {
+  font-family: var(--display); font-stretch: 78%; font-weight: 750;
+  font-size: clamp(1.6rem, 3.2vw, 2.2rem); line-height: 1.05; margin: 0;
+  letter-spacing: -0.01em; text-wrap: balance;
+}
+h1 .eq { font-family: var(--mono); font-weight: 400; font-size: 0.5em; color: var(--muted); letter-spacing: 0; display: block; margin-top: 6px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button {
+  font: 500 13px var(--body); color: var(--muted); background: transparent; border: 0;
+  padding: 7px 12px; cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.seg button:focus-visible, .btn:focus-visible, canvas:focus-visible, input:focus-visible { outline: 2px solid var(--probe); outline-offset: 2px; }
+.top-right { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+}
+.group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.group + .group { border-left: 1px solid var(--line); padding-left: 18px; }
+@media (max-width: 720px) { .group + .group { border-left: 0; padding-left: 0; } }
+.btn {
+  font: 500 13px var(--body); color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line); border-radius: 7px; padding: 6px 11px; cursor: pointer;
+}
+.btn:hover { border-color: var(--axis); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+label.slider { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+label.slider input { width: 96px; accent-color: var(--accent); }
+label.slider output { font-family: var(--mono); color: var(--ink); min-width: 2.6em; font-variant-numeric: tabular-nums; }
+label.check { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+label.check input { accent-color: var(--accent); }
+
+.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .panels { grid-template-columns: 1fr; } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 8px; min-width: 0; }
+.panel h2 {
+  font-family: var(--display); font-stretch: 85%; font-weight: 650; font-size: 1.05rem;
+  margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.panel h2 small { font-family: var(--body); font-weight: 400; font-size: 12px; color: var(--muted); }
+canvas { width: 100%; aspect-ratio: 1; max-width: 100%; display: block; touch-action: none; border-radius: 6px; cursor: crosshair; }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+.readout { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; display: grid; gap: 3px; min-height: 3.2em; overflow-wrap: anywhere; }
+.readout .k { color: var(--muted); }
+.readout .probe { color: var(--probe); font-weight: 500; }
+.chip {
+  display: inline-block; font-family: var(--body); font-size: 11.5px; font-weight: 600;
+  padding: 1px 8px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); color: var(--muted);
+}
+.chip.hit { border-color: var(--probe); color: var(--probe); }
+.note { font-size: 12.5px; color: var(--muted); border-left: 3px solid var(--probe); padding: 2px 0 2px 10px; margin: 0; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><span data-t="title"></span><span class="eq" id="eqHead"></span></h1>
+    <div class="top-right">
+      <div class="seg" role="group" aria-label="Parameter space">
+        <button id="spPolar" aria-pressed="true" data-t="polar"></button>
+        <button id="spPol360" aria-pressed="false" data-t="polar360"></button>
+        <button id="spSlope" aria-pressed="false" data-t="slope"></button>
+      </div>
+      <div class="seg" role="group" aria-label="Language">
+        <button id="lgHr" aria-pressed="true">HR</button>
+        <button id="lgEn" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="controls" aria-label="Controls">
+    <div class="group">
+      <button class="btn primary" id="bLine" data-t="sampleLine"></button>
+      <button class="btn" id="bTwo" data-t="twoLines"></button>
+      <button class="btn" id="bOut" data-t="outliers"></button>
+      <button class="btn" id="bClear" data-t="clear"></button>
+    </div>
+    <div class="group">
+      <button class="btn toggle" id="bImgCoords" aria-pressed="false"></button>
+      <button class="btn toggle" id="bAcc" aria-pressed="true"></button>
+      <label class="slider"><span id="binsUL"></span><input type="range" id="binsU" min="4" max="180" step="2" value="72"><output id="binsUO">72</output></label>
+      <label class="slider"><span id="binsVL"></span><input type="range" id="binsV" min="4" max="180" step="2" value="72"><output id="binsVO">72</output></label>
+      <button class="btn" id="bPeak" data-t="peak"></button>
+      <button class="btn" id="bPlay" data-t="play"></button>
+    </div>
+  </section>
+
+  <div class="panels">
+    <section class="panel">
+      <h2><span data-t="imgSpace"></span> <small id="imgCount"></small></h2>
+      <canvas id="cImg" tabindex="0" aria-label="Image space"></canvas>
+      <p class="hint" data-t="imgHint"></p>
+      <div class="readout" id="rImg"></div>
+    </section>
+    <section class="panel">
+      <h2><span data-t="parSpace"></span> <small id="parName"></small></h2>
+      <canvas id="cPar" tabindex="0" aria-label="Parameter space"></canvas>
+      <p class="hint" data-t="parHint"></p>
+      <div class="readout" id="rPar"></div>
+    </section>
+  </div>
+  <p class="note" id="note"></p>
+</div>
+
+<script>
+(() => {
+  const T = {
+    hr: {
+      title: "Houghova dualnost: točke i pravci",
+      polar: "Polarni (θ, ρ)", polar360: "Polarni (ρ≥0, 0–360°)", slope: "Nagib–odsječak (k, l)",
+      sampleLine: "Uzorkuj pravac", twoLines: "Dva pravca", outliers: "Dodaj stršeće točke", clear: "Obriši sve",
+      perLine: "Točaka po pravcu", noise: "Šum σ", showAcc: "Prikaži akumulator", hideAcc: "Sakrij akumulator", bins: s => `Ćelije ${s}`,
+      peak: "Skoči na vrh", play: "Pomiči po krivulji", stop: "Zaustavi",
+      imgSpace: "Prostor slike (x, y)", parSpace: "Prostor parametara",
+      imgHint: "Klik dodaje točku · povuci za pomicanje · desni klik ili Shift+klik briše · klik na točku odabire njezinu krivulju",
+      parHint: "Klik na krivulju je odabire, zatim povuci ručicu po njoj · klik u prazno daje slobodan pravac · strelice ←/→ pomiču ručicu",
+      points: n => `${n} ${n === 1 ? "točka" : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? "točke" : "točaka"}`,
+      line: "pravac", onLine: (k, n, t) => `na pravcu: ${k} od ${n} (tolerancija ±${t})`,
+      selPt: "odabrana točka", curve: "njezina krivulja", none: "Odaberite točku ili kliknite u prostor parametara.",
+      cell: "vrh akumulatora", votes: "glasova",
+      vertical: "okomit pravac: k = ∞, ne može se prikazati u prostoru (k, l)",
+      notePolar: "Svaka točka slike postaje sinusoida ρ = x cos θ + y sin θ. Sinusoide kolinearnih točaka sijeku se u jednoj točki (θ, ρ): to je zajednički pravac. Oba parametra su ograničena.",
+      notePolar360: "Kao polarni zapis, ali ρ je uvijek nenegativan, a θ ide od 0° do 360°. Svaki pravac prikazan je jednom: (θ, ρ) i (θ+180°, −ρ) opisuju isti pravac; ovdje uvijek biramo inačicu s ρ≥0. Krivulje su lučevi sinusoide iznad osi.",
+      noteSlope: "Svaka točka slike postaje pravac l = −x·k + y. Kolinearne točke daju pravce kroz jednu točku (k, l). Nagib k nije ograničen: strmi pravci izlaze iz prikaza, a okomiti se uopće ne mogu prikazati.",
+      outside: "izvan prikaza",
+      imgCoordsOn: "Slike: y↓", imgCoordsOff: "Kartezij: y↑"
+    },
+    en: {
+      title: "Hough duality: points and lines",
+      polar: "Polar (θ, ρ)", polar360: "Polar (ρ≥0, 0–360°)", slope: "Slope–intercept (k, l)",
+      sampleLine: "Sample a line", twoLines: "Two lines", outliers: "Add outliers", clear: "Clear",
+      perLine: "Points per line", noise: "Noise σ", showAcc: "Show accumulator", hideAcc: "Hide accumulator", bins: s => `${s} bins`,
+      peak: "Jump to peak", play: "Sweep along curve", stop: "Stop",
+      imgSpace: "Image space (x, y)", parSpace: "Parameter space",
+      imgHint: "Click to add a point · drag to move · right-click or Shift+click to delete · click a point to select its curve",
+      parHint: "Click a curve to select it, then drag the handle along it · click empty space for a free line · ←/→ keys move the handle",
+      points: n => `${n} point${n === 1 ? "" : "s"}`,
+      line: "line", onLine: (k, n, t) => `on the line: ${k} of ${n} (tolerance ±${t})`,
+      selPt: "selected point", curve: "its curve", none: "Select a point or click in parameter space.",
+      cell: "accumulator peak", votes: "votes",
+      vertical: "vertical line: k = ∞, cannot be shown in (k, l) space",
+      notePolar: "Every image point becomes a sinusoid ρ = x cos θ + y sin θ. Sinusoids of collinear points cross at one point (θ, ρ): their common line. Both parameters are bounded.",
+      notePolar360: "Like the polar form, but ρ is always non-negative and θ sweeps 0°–360°. Each line appears once: (θ, ρ) and (θ+180°, −ρ) describe the same line; we always pick the version with ρ≥0. Curves appear as sinusoidal arches above the axis.",
+      noteSlope: "Every image point becomes a line l = −x·k + y. Collinear points give lines through one point (k, l). The slope k is unbounded: steep lines leave the view and vertical lines cannot be shown at all.",
+      outside: "outside the view",
+      imgCoordsOn: "Image: y↓", imgCoordsOff: "Cartesian: y↑"
+    }
+  };
+
+  const D = Math.PI / 180;
+  const IMG     = { u: [-5, 5],  v: [-5, 5],  uT: [-4, -2, 0, 2, 4],       vT: [-4, -2, 0, 2, 4],       grid: 1 };
+  const IMG_ICS = { u: [-2, 11], v: [-2, 11], uT: [-2, 0, 2, 4, 6, 8, 10], vT: [-2, 0, 2, 4, 6, 8, 10], grid: 1 };
+  const PAR = {
+    polar:   { u: [-90, 90],  v: [-7.5, 7.5], uT: [-90, -45, 0, 45, 90],    vT: [-6, -4, -2, 0, 2, 4, 6], grid: null },
+    polar360:{ u: [0, 360],   v: [0, 7.5],    uT: [0, 90, 180, 270, 360],   vT: [0, 2, 4, 6],              grid: null },
+    slope:   { u: [-4, 4],    v: [-12, 12],   uT: [-4, -2, 0, 2, 4],        vT: [-12, -8, -4, 0, 4, 8, 12],grid: null }
+  };
+  // In image coords, ρ spans ±D where D is the image diagonal (10√2 ≈ 14.14)
+  const DIAG = Math.hypot(10, 10);
+  const PAR_ICS = {
+    polar:    { ...PAR.polar,    v: [-DIAG, DIAG], vT: [-12, -8, -4, 0, 4, 8, 12] },
+    polar360: { ...PAR.polar360, v: [0, DIAG],     vT: [0, 4, 8, 12] }
+  };
+  const parR = (sp = S.space) => (S.imgCoords && PAR_ICS[sp]) || PAR[sp];
+
+  const S = {
+    pts: [], nextId: 0, space: "polar", sel: -1, probe: null, hover: -1,
+    showAcc: true, binsU: 72, binsV: 72, nPer: 8, noise: 0.08, lang: "hr", playing: false, dir: 1,
+    imgCoords: false
+  };
+  try { const l = localStorage.getItem("hough-lang"); if (l === "en" || l === "hr") S.lang = l; } catch (e) {}
+
+  const $ = id => document.getElementById(id);
+  const cImg = $("cImg"), cPar = $("cPar");
+  const M = { l: 40, r: 12, t: 12, b: 30 };
+  const panels = { img: { c: cImg, ctx: cImg.getContext("2d"), W: 0, H: 0 }, par: { c: cPar, ctx: cPar.getContext("2d"), W: 0, H: 0 } };
+
+  // ---------- math ----------
+  const effX = p => S.imgCoords ? p.x + 5 : p.x;
+  const effY = p => S.imgCoords ? 5 - p.y : p.y;
+  const curve = (p, u, sp = S.space) => {
+    const ex = effX(p), ey = effY(p);
+    return (sp === "polar" || sp === "polar360") ? ex * Math.cos(u * D) + ey * Math.sin(u * D) : -ex * u + ey;
+  };
+
+  function toLine(sp, u, v) {
+    if (sp === "polar" || sp === "polar360") return { th: u * D, rho: v };
+    const n = Math.hypot(u, 1);
+    let th = Math.atan2(1, -u), rho = v / n;
+    if (th >= Math.PI / 2) { th -= Math.PI; rho = -rho; }
+    return { th, rho };
+  }
+  function fromLine(sp, L) {
+    if (sp === "polar") {
+      let th = L.th, rho = L.rho;
+      if (th >= Math.PI / 2) { th -= Math.PI; rho = -rho; }
+      if (th < -Math.PI / 2) { th += Math.PI; rho = -rho; }
+      return { u: th / D, v: rho };
+    }
+    if (sp === "polar360") {
+      let th = L.th, rho = L.rho;
+      if (rho < 0) { th += Math.PI; rho = -rho; }
+      const u = ((th / D) % 360 + 360) % 360;
+      return { u, v: rho };
+    }
+    const s = Math.sin(L.th);
+    if (Math.abs(s) < 1e-9) return null;
+    return { u: -Math.cos(L.th) / s, v: L.rho / s };
+  }
+  const distToLine = (p, L) => Math.abs(effX(p) * Math.cos(L.th) + effY(p) * Math.sin(L.th) - L.rho);
+  const tol = () => Math.max(0.15, +(1.5 * S.noise).toFixed(2));
+
+  function gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  function addPoint(x, y) { S.pts.push({ x, y, id: S.nextId++ }); }
+
+  function sampleLine() {
+    const th = (Math.random() - 0.5) * Math.PI, rho = (Math.random() - 0.5) * 5;
+    const f = [rho * Math.cos(th), rho * Math.sin(th)], d = [-Math.sin(th), Math.cos(th)];
+    const B = 4.6; let lo = Infinity, hi = -Infinity;
+    for (let t = -12; t <= 12; t += 0.02) {
+      const x = f[0] + t * d[0], y = f[1] + t * d[1];
+      if (Math.abs(x) <= B && Math.abs(y) <= B) { lo = Math.min(lo, t); hi = Math.max(hi, t); }
+    }
+    if (!(hi > lo + 1)) return sampleLine();
+    for (let i = 0; i < S.nPer; i++) {
+      const t = lo + (hi - lo) * (i + 0.2 + 0.6 * Math.random()) / S.nPer;
+      addPoint(clamp(f[0] + t * d[0] + S.noise * gauss(), -4.9, 4.9), clamp(f[1] + t * d[1] + S.noise * gauss(), -4.9, 4.9));
+    }
+  }
+  function addOutliers(k) { for (let i = 0; i < k; i++) addPoint((Math.random() - 0.5) * 9.4, (Math.random() - 0.5) * 9.4); }
+  const clamp = (a, lo, hi) => Math.min(hi, Math.max(lo, a));
+
+  function colorOf(p, alpha = 1) {
+    const cs = getComputedStyle(document.documentElement);
+    const h = (p.id * 137.508 + 200) % 360;
+    return `hsla(${h.toFixed(1)}, ${cs.getPropertyValue("--pt-s").trim()}, ${cs.getPropertyValue("--pt-l").trim()}, ${alpha})`;
+  }
+
+  // ---------- accumulator ----------
+  let accCache = null;
+  function accumulator() {
+    const key = S.space + S.binsU + "x" + S.binsV + S.imgCoords + S.pts.map(p => p.x.toFixed(4) + "," + p.y.toFixed(4)).join(";");
+    if (accCache && accCache.key === key) return accCache;
+    const R = parR(), Nu = S.binsU, Nv = S.binsV, A = new Float32Array(Nu * Nv);
+    const du = (R.u[1] - R.u[0]) / Nu, dv = (R.v[1] - R.v[0]) / Nv, sub = Math.max(8, Math.ceil(8 * Nv / Nu));
+    for (const p of S.pts) {
+      const seen = new Set();
+      let prev = null;
+      for (let s = 0; s < Nu * sub; s++) {
+        const u = R.u[0] + (s + 0.5) * du / sub, v = curve(p, u);
+        const iu = Math.floor((u - R.u[0]) / du);
+        const iv = Math.floor((v - R.v[0]) / dv);
+        const lo = prev !== null && prev.iu === iu ? Math.min(prev.iv, iv) : iv;
+        const hi = prev !== null && prev.iu === iu ? Math.max(prev.iv, iv) : iv;
+        for (let j = Math.max(0, lo); j <= Math.min(Nv - 1, hi); j++) {
+          const k = j * Nu + iu;
+          if (!seen.has(k)) { seen.add(k); A[k]++; }
+        }
+        prev = { iu, iv };
+      }
+    }
+    let max = 0, arg = -1;
+    for (let k = 0; k < A.length; k++) if (A[k] > max) { max = A[k]; arg = k; }
+    accCache = { key, A, Nu, Nv, max, arg, du, dv };
+    return accCache;
+  }
+
+  // ---------- drawing ----------
+  function rangeOf(which) { return which === "img" ? IMG : parR(); }
+  function toPx(P, R, u, v, flipY = false) {
+    const px = M.l + (u - R.u[0]) / (R.u[1] - R.u[0]) * (P.W - M.l - M.r);
+    const py = flipY
+      ? M.t + (v - R.v[0]) / (R.v[1] - R.v[0]) * (P.H - M.t - M.b)
+      : M.t + (R.v[1] - v) / (R.v[1] - R.v[0]) * (P.H - M.t - M.b);
+    return [px, py];
+  }
+  function fromPx(P, R, x, y, flipY = false) {
+    const u = R.u[0] + (x - M.l) / (P.W - M.l - M.r) * (R.u[1] - R.u[0]);
+    const v = flipY
+      ? R.v[0] + (y - M.t) / (P.H - M.t - M.b) * (R.v[1] - R.v[0])
+      : R.v[1] - (y - M.t) / (P.H - M.t - M.b) * (R.v[1] - R.v[0]);
+    return [u, v];
+  }
+
+  // Image-canvas helpers: work in "effective" coords (image when S.imgCoords, else Cartesian)
+  function imgRange() { return S.imgCoords ? IMG_ICS : IMG; }
+  // ex, ey = effective coords → pixel
+  function imgToPx(P, ex, ey) { return toPx(P, imgRange(), ex, ey, S.imgCoords); }
+  // pixel → Cartesian coords (always, for storage)
+  function imgFromPx(P, px, py) {
+    const R = imgRange(), [eu, ev] = fromPx(P, R, px, py, S.imgCoords);
+    return S.imgCoords ? [eu - 5, 5 - ev] : [eu, ev];
+  }
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    for (const P of Object.values(panels)) {
+      const w = P.c.clientWidth;
+      P.W = w; P.H = w;
+      P.c.width = Math.round(w * dpr); P.c.height = Math.round(w * dpr);
+      P.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    render();
+  }
+
+  function axes(P, R, labU, labV, fmtU, flipY = false, bold = false, frame = null) {
+    const g = P.ctx, cs = getComputedStyle(document.documentElement), tok = n => cs.getPropertyValue(n).trim();
+    g.clearRect(0, 0, P.W, P.H);
+    g.fillStyle = tok("--panel"); g.fillRect(0, 0, P.W, P.H);
+    // Bounding box in pixel space (fixed regardless of flipY)
+    const x0 = M.l, x1 = P.W - M.r, y0 = M.t, y1 = P.H - M.b;
+    g.lineWidth = 1;
+    g.strokeStyle = tok("--grid");
+    g.beginPath();
+    const minorU = R.grid || (R.uT[1] - R.uT[0]) / 2, minorV = R.grid || (R.vT[1] - R.vT[0]) / 2;
+    for (let u = Math.ceil(R.u[0] / minorU) * minorU; u <= R.u[1] + 1e-9; u += minorU) { const [x] = toPx(P, R, u, 0, flipY); g.moveTo(Math.round(x) + 0.5, y0); g.lineTo(Math.round(x) + 0.5, y1); }
+    for (let v = Math.ceil(R.v[0] / minorV) * minorV; v <= R.v[1] + 1e-9; v += minorV) { const [, y] = toPx(P, R, 0, v, flipY); g.moveTo(x0, Math.round(y) + 0.5); g.lineTo(x1, Math.round(y) + 0.5); }
+    g.stroke();
+    if (frame) {
+      // Shade everything outside the frame rect (the actual image), outline its far edges
+      const [ia, ib, ic, id] = frame;
+      g.save();
+      g.beginPath(); g.rect(x0, y0, x1 - x0, y1 - y0); g.rect(ia, ib, ic - ia, id - ib);
+      g.fillStyle = tok("--grid"); g.globalAlpha = 0.45; g.fill("evenodd");
+      g.globalAlpha = 1; g.strokeStyle = tok("--muted"); g.setLineDash([4, 4]);
+      g.beginPath(); g.moveTo(ic, ib); g.lineTo(ic, id); g.lineTo(ia, id); g.stroke();
+      g.restore();
+    }
+    const [zx, zy] = toPx(P, R, 0, 0, flipY);
+    if (bold) {
+      // Bold x and y axes with arrowheads at the positive ends
+      const ax = Math.round(zx), ay = Math.round(zy), yEnd = flipY ? y1 : y0, yDir = flipY ? 1 : -1, h = 9;
+      g.strokeStyle = tok("--ink"); g.fillStyle = tok("--ink"); g.lineWidth = 2.2;
+      g.beginPath();
+      g.moveTo(x0, ay); g.lineTo(x1 - h, ay);
+      g.moveTo(ax, flipY ? y0 : y1); g.lineTo(ax, yEnd - yDir * h);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(x1, ay); g.lineTo(x1 - h, ay - h / 2); g.lineTo(x1 - h, ay + h / 2); g.closePath();
+      g.moveTo(ax, yEnd); g.lineTo(ax - h / 2, yEnd - yDir * h); g.lineTo(ax + h / 2, yEnd - yDir * h); g.closePath();
+      g.fill();
+      g.lineWidth = 1;
+    } else {
+      g.strokeStyle = tok("--axis");
+      g.beginPath();
+      g.moveTo(Math.round(zx) + 0.5, y0); g.lineTo(Math.round(zx) + 0.5, y1);
+      g.moveTo(x0, Math.round(zy) + 0.5); g.lineTo(x1, Math.round(zy) + 0.5);
+      g.stroke();
+    }
+    g.strokeStyle = tok("--line"); g.strokeRect(x0 + 0.5, y0 + 0.5, x1 - x0 - 1, y1 - y0 - 1);
+    g.fillStyle = tok("--muted"); g.font = `11px ${tok("--mono")}`;
+    g.textAlign = "center"; g.textBaseline = "top";
+    for (const u of R.uT) { const [x] = toPx(P, R, u, 0, flipY); g.fillText(fmtU(u), x, y1 + 5); }
+    g.textAlign = "right"; g.textBaseline = "middle";
+    for (const v of R.vT) { const [, y] = toPx(P, R, 0, v, flipY); g.fillText(String(v), x0 - 5, y); }
+    g.fillStyle = tok("--ink");
+    if (bold) {
+      // Axis names next to the arrow tips
+      g.font = `italic bold 14px ${tok("--body")}`;
+      g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(labU, x1 - 4, zy - 6);
+      g.textAlign = "left"; g.textBaseline = flipY ? "bottom" : "top"; g.fillText(labV, zx + 8, flipY ? y1 - 4 : y0 + 4);
+    } else {
+      g.font = `italic 12px ${tok("--body")}`;
+      g.textAlign = "right"; g.textBaseline = "bottom"; g.fillText(labU, x1 - 2, y1 - 3);
+      g.textAlign = "left"; g.textBaseline = "top"; g.fillText(labV, x0 + 5, y0 + 3);
+    }
+    return { x0, x1, y0, y1, tok };
+  }
+
+  function currentLine() {
+    if (!S.probe) return null;
+    return toLine(S.space, S.probe.u, S.probe.v);
+  }
+
+  function drawImg() {
+    const P = panels.img, R = imgRange(), g = P.ctx;
+    const labY = "y";
+    const frame = S.imgCoords ? [...imgToPx(P, 0, 0), ...imgToPx(P, 10, 10)] : null;
+    const { x0, x1, y0, y1, tok } = axes(P, R, "x", labY, u => String(u), S.imgCoords, true, frame);
+    g.save(); g.beginPath(); g.rect(x0, y0, x1 - x0, y1 - y0); g.clip();
+    const L = currentLine();
+    if (L) {
+      // All geometry computed in effective coords (image or Cartesian)
+      const c = Math.cos(L.th), s = Math.sin(L.th);
+      const foot = [L.rho * c, L.rho * s], d = [-s, c];
+      const a = imgToPx(P, foot[0] - 20 * d[0], foot[1] - 20 * d[1]);
+      const b = imgToPx(P, foot[0] + 20 * d[0], foot[1] + 20 * d[1]);
+      g.strokeStyle = tok("--probe"); g.globalAlpha = 0.12;
+      g.lineWidth = 2 * tol() / (R.u[1] - R.u[0]) * (P.W - M.l - M.r);
+      g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke();
+      g.globalAlpha = 1; g.lineWidth = 2.5;
+      g.beginPath(); g.moveTo(...a); g.lineTo(...b); g.stroke();
+      // Origin in effective coords is always (0,0)
+      const O = imgToPx(P, 0, 0), F = imgToPx(P, foot[0], foot[1]);
+      if (S.space === "polar" || S.space === "polar360") {
+        g.setLineDash([5, 4]); g.lineWidth = 1.5;
+        g.beginPath(); g.moveTo(...O); g.lineTo(...F); g.stroke(); g.setLineDash([]);
+        if (Math.abs(L.rho) > 0.25) {
+          const k = 9, sg = Math.sign(L.rho);
+          const n = [c * sg, -s * sg], t = [-s, -c];
+          g.beginPath();
+          g.moveTo(F[0] - n[0] * k, F[1] - n[1] * k);
+          g.lineTo(F[0] - n[0] * k + t[0] * k, F[1] - n[1] * k + t[1] * k);
+          g.lineTo(F[0] + t[0] * k, F[1] + t[1] * k);
+          g.stroke();
+        }
+        g.fillStyle = tok("--probe"); g.font = `italic 13px ${tok("--body")}`;
+        g.textAlign = "left"; g.textBaseline = "bottom";
+        g.fillText("ρ", (O[0] + F[0]) / 2 + 6, (O[1] + F[1]) / 2 - 2);
+        // Unit normal n = (cos θ, sin θ) drawn as an arrow from the origin.
+        // θ is the angle of n, not of the foot: when ρ < 0 the foot lies opposite to n.
+        const N = imgToPx(P, 1.6 * c, 1.6 * s), nx = N[0] - O[0], ny = N[1] - O[1], nl = Math.hypot(nx, ny) || 1, ah = 8;
+        g.lineWidth = 2; g.setLineDash([]);
+        g.beginPath(); g.moveTo(...O); g.lineTo(N[0] - nx / nl * ah, N[1] - ny / nl * ah); g.stroke();
+        g.beginPath(); g.moveTo(...N);
+        g.lineTo(N[0] - nx / nl * ah - ny / nl * ah / 2, N[1] - ny / nl * ah + nx / nl * ah / 2);
+        g.lineTo(N[0] - nx / nl * ah + ny / nl * ah / 2, N[1] - ny / nl * ah - nx / nl * ah / 2);
+        g.closePath(); g.fill();
+        g.font = `italic bold 13px ${tok("--body")}`; g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillText("n", N[0] + nx / nl * 10, N[1] + ny / nl * 10);
+        // Arc from the +x axis to n. Canvas angles grow clockwise on screen:
+        // in image coords (y↓) that is the +θ direction, in Cartesian (y↑) it is −θ.
+        const r = 24, end = S.imgCoords ? L.th : -L.th;
+        g.lineWidth = 1.2;
+        if (Math.abs(end) > 1e-3) { g.beginPath(); g.arc(O[0], O[1], r, 0, end, end < 0); g.stroke(); }
+        g.font = `italic 13px ${tok("--body")}`;
+        g.fillText("θ", O[0] + (r + 11) * Math.cos(end / 2), O[1] + (r + 11) * Math.sin(end / 2));
+      } else {
+        // y-intercept: x=0 in effective coords
+        const C = imgToPx(P, 0, S.probe.v);
+        g.fillStyle = tok("--probe");
+        g.beginPath(); g.arc(C[0], C[1], 4, 0, 7); g.fill();
+        g.font = `italic 13px ${tok("--body")}`; g.textAlign = "left"; g.textBaseline = "bottom";
+        g.fillText("l", C[0] + 6, C[1] - 2);
+      }
+    }
+    for (let i = 0; i < S.pts.length; i++) {
+      const p = S.pts[i];
+      const [x, y] = imgToPx(P, effX(p), effY(p));
+      const on = L && distToLine(p, L) <= tol();
+      if (on) { g.strokeStyle = tok("--probe"); g.lineWidth = 2; g.beginPath(); g.arc(x, y, 9, 0, 7); g.stroke(); }
+      g.fillStyle = colorOf(p);
+      g.beginPath(); g.arc(x, y, i === S.sel || i === S.hover ? 6.5 : 5, 0, 7); g.fill();
+      if (i === S.sel) { g.strokeStyle = tok("--ink"); g.lineWidth = 2; g.beginPath(); g.arc(x, y, 11.5, 0, 7); g.stroke(); }
+    }
+    g.restore();
+  }
+
+  function drawPar() {
+    const P = panels.par, R = parR(), g = P.ctx;
+    const isPolar = S.space === "polar" || S.space === "polar360";
+    const { x0, x1, y0, y1, tok } = axes(P, R, isPolar ? "θ [°]" : "k", isPolar ? "ρ" : "l", u => isPolar ? u + "°" : String(u));
+    g.save(); g.beginPath(); g.rect(x0, y0, x1 - x0, y1 - y0); g.clip();
+    if (S.showAcc && S.pts.length) {
+      const acc = accumulator();
+      if (acc.max > 0) {
+        const off = document.createElement("canvas"); off.width = acc.Nu; off.height = acc.Nv;
+        const oc = off.getContext("2d"), im = oc.createImageData(acc.Nu, acc.Nv);
+        const [r, gg, b] = tok("--heat").split(",").map(Number);
+        for (let j = 0; j < acc.Nv; j++) for (let i = 0; i < acc.Nu; i++) {
+          const val = acc.A[j * acc.Nu + i]; if (!val) continue;
+          const o = ((acc.Nv - 1 - j) * acc.Nu + i) * 4;
+          im.data[o] = r; im.data[o + 1] = gg; im.data[o + 2] = b;
+          im.data[o + 3] = Math.round(255 * 0.8 * Math.pow(val / acc.max, 1.4));
+        }
+        oc.putImageData(im, 0, 0);
+        g.imageSmoothingEnabled = false;
+        g.drawImage(off, x0, y0, x1 - x0, y1 - y0);
+      }
+    }
+    const steps = 360;
+    for (let i = 0; i < S.pts.length; i++) {
+      const p = S.pts[i], emph = i === S.sel || i === S.hover;
+      g.strokeStyle = colorOf(p, S.sel >= 0 && !emph ? 0.35 : 0.9);
+      g.lineWidth = emph ? 3.2 : 1.5;
+      g.beginPath();
+      let started = false;
+      for (let s = 0; s <= steps; s++) {
+        const u = R.u[0] + (R.u[1] - R.u[0]) * s / steps;
+        const v = curve(p, u);
+        // In polar360 mode, only draw segments where ρ >= 0
+        if (S.space === "polar360" && v < 0) { started = false; continue; }
+        const [x, y] = toPx(P, R, u, v);
+        if (!started) { g.moveTo(x, y); started = true; } else g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+    if (S.probe) {
+      const [x, y] = toPx(P, R, S.probe.u, S.probe.v);
+      g.strokeStyle = tok("--probe"); g.lineWidth = 1; g.setLineDash([3, 4]);
+      g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke(); g.setLineDash([]);
+      g.fillStyle = tok("--probe"); g.strokeStyle = tok("--panel"); g.lineWidth = 2.5;
+      g.beginPath(); g.arc(x, y, 7.5, 0, 7); g.fill(); g.stroke();
+    }
+    g.restore();
+  }
+
+  const f2 = a => (Math.abs(a) < 5e-3 ? 0 : a).toFixed(2);
+  const sg = a => (a < 0 ? "− " : "+ ") + Math.abs(a).toFixed(2);
+
+  function readouts() {
+    const t = T[S.lang], polar = S.space === "polar", pol360 = S.space === "polar360";
+    $("imgCount").textContent = t.points(S.pts.length);
+    $("parName").textContent = polar ? t.polar : pol360 ? t.polar360 : t.slope;
+    const coordNote = S.imgCoords ? " [img]" : "";
+    $("eqHead").textContent = (polar || pol360) ? `ρ = x cos θ + y sin θ${coordNote}` : `y = k x + l   ⟷   l = −x k + y${coordNote}`;
+    $("note").textContent = polar ? t.notePolar : pol360 ? t.notePolar360 : t.noteSlope;
+    const L = currentLine(), rI = [], rP = [];
+    if (L) {
+      const k = S.pts.filter(p => distToLine(p, L) <= tol()).length;
+      if (polar || pol360) rI.push(`<span class="k">${t.line}:</span> <span class="probe">x cos(${f2(S.probe.u)}°) + y sin(${f2(S.probe.u)}°) = ${f2(S.probe.v)}</span>`);
+      else rI.push(`<span class="k">${t.line}:</span> <span class="probe">y = ${f2(S.probe.u)} x ${sg(S.probe.v)}</span>`);
+      rI.push(`<span><span class="chip${k >= 2 ? " hit" : ""}">${t.onLine(k, S.pts.length, tol())}</span></span>`);
+      const R = parR(), inside = S.probe.v >= R.v[0] && S.probe.v <= R.v[1];
+      rP.push(`<span class="probe">${(polar || pol360) ? `θ = ${f2(S.probe.u)}°   ρ = ${f2(S.probe.v)}` : `k = ${f2(S.probe.u)}   l = ${f2(S.probe.v)}`}${inside ? "" : `  (${t.outside})`}</span>`);
+    } else rI.push(`<span class="k">${t.none}</span>`);
+    if (S.sel >= 0) {
+      const p = S.pts[S.sel];
+      const dx = effX(p), dy = effY(p);
+      rP.push(`<span><span class="k">${t.selPt}:</span> (${f2(dx)}, ${f2(dy)})</span>`);
+      rP.push(`<span><span class="k">${t.curve}:</span> ${(polar || pol360) ? `ρ = ${f2(dx)} cos θ ${sg(dy)} sin θ` : `l = ${f2(-dx)} k ${sg(dy)}`}</span>`);
+    } else if (S.showAcc && S.pts.length) {
+      const acc = accumulator();
+      rP.push(`<span><span class="k">${t.cell}:</span> ${acc.max} ${t.votes}</span>`);
+    }
+    $("rImg").innerHTML = rI.join("");
+    $("rPar").innerHTML = rP.join("");
+    $("bImgCoords").textContent = S.imgCoords ? t.imgCoordsOn : t.imgCoordsOff;
+    $("bImgCoords").setAttribute("aria-pressed", S.imgCoords);
+    $("bAcc").textContent = S.showAcc ? t.hideAcc : t.showAcc;
+    $("bAcc").setAttribute("aria-pressed", S.showAcc);
+    $("binsU").disabled = $("binsV").disabled = !S.showAcc;
+    $("binsUL").textContent = t.bins((polar || pol360) ? "θ" : "k");
+    $("binsVL").textContent = t.bins((polar || pol360) ? "ρ" : "l");
+    $("bPlay").disabled = !S.pts.length;
+    $("bPeak").disabled = !S.pts.length;
+  }
+
+  function render() {
+    if (S.sel >= S.pts.length) S.sel = -1;
+    if (S.sel >= 0 && S.probe) {
+      const cv = curve(S.pts[S.sel], S.probe.u);
+      S.probe.v = S.space === "polar360" ? Math.max(0, cv) : cv;
+    }
+    drawImg(); drawPar(); readouts();
+  }
+
+  // ---------- interaction ----------
+  function evPos(P, e) { const r = P.c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  let drag = null;
+
+  function hitPoint(px, py) {
+    const P = panels.img; let best = -1, bd = 12;
+    S.pts.forEach((p, i) => { const [x, y] = imgToPx(P, effX(p), effY(p)); const d = Math.hypot(x - px, y - py); if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  function selectPoint(i) {
+    S.sel = i;
+    if (i >= 0) {
+      const R = parR();
+      const u = S.probe ? S.probe.u : (R.u[0] + R.u[1]) / 2 + (R.u[1] - R.u[0]) * 0.1;
+      const cv = curve(S.pts[i], u);
+      S.probe = { u, v: S.space === "polar360" ? Math.max(0, cv) : cv };
+    }
+  }
+  function removePoint(i) {
+    S.pts.splice(i, 1);
+    if (S.sel === i) S.sel = -1; else if (S.sel > i) S.sel--;
+    S.hover = -1;
+  }
+
+  cImg.addEventListener("contextmenu", e => e.preventDefault());
+  cImg.addEventListener("pointerdown", e => {
+    const P = panels.img, [px, py] = evPos(P, e), i = hitPoint(px, py);
+    if (i >= 0 && (e.button === 2 || e.shiftKey)) { removePoint(i); render(); return; }
+    if (e.button === 2) return;
+    cImg.setPointerCapture(e.pointerId);
+    if (i >= 0) drag = { kind: "pt", i, moved: false, sx: px, sy: py };
+    else {
+      const [x, y] = imgFromPx(P, px, py);
+      if (Math.abs(x) > 5 || Math.abs(y) > 5) return;
+      addPoint(x, y); drag = { kind: "pt", i: S.pts.length - 1, moved: true, sx: px, sy: py };
+    }
+    render();
+  });
+  cImg.addEventListener("pointermove", e => {
+    const P = panels.img, [px, py] = evPos(P, e);
+    if (drag && drag.kind === "pt") {
+      if (Math.hypot(px - drag.sx, py - drag.sy) > 3) drag.moved = true;
+      if (drag.moved) {
+        const [x, y] = imgFromPx(P, px, py), p = S.pts[drag.i];
+        p.x = clamp(x, -5, 5); p.y = clamp(y, -5, 5);
+      }
+      render(); return;
+    }
+    const h = hitPoint(px, py);
+    cImg.style.cursor = h >= 0 ? "grab" : "crosshair";
+    if (h !== S.hover) { S.hover = h; render(); }
+  });
+  const endImg = () => {
+    if (drag && drag.kind === "pt" && !drag.moved) selectPoint(S.sel === drag.i ? -1 : drag.i);
+    drag = null; render();
+  };
+  cImg.addEventListener("pointerup", endImg);
+  cImg.addEventListener("pointercancel", () => { drag = null; });
+  cImg.addEventListener("pointerleave", () => { if (!drag && S.hover !== -1) { S.hover = -1; render(); } });
+
+  function hitCurve(px, py) {
+    const P = panels.par, R = parR(); let best = -1, bd = 9;
+    const steps = 360;
+    S.pts.forEach((p, i) => {
+      let prev = null;
+      for (let s = 0; s <= steps; s++) {
+        const u = R.u[0] + (R.u[1] - R.u[0]) * s / steps;
+        const v = curve(p, u);
+        if (S.space === "polar360" && v < 0) { prev = null; continue; }
+        const cur = toPx(P, R, u, v);
+        if (prev) {
+          const dx = cur[0] - prev[0], dy = cur[1] - prev[1], L2 = dx * dx + dy * dy || 1;
+          const t = clamp(((px - prev[0]) * dx + (py - prev[1]) * dy) / L2, 0, 1);
+          const d = Math.hypot(px - prev[0] - t * dx, py - prev[1] - t * dy);
+          if (d < bd) { bd = d; best = i; }
+        }
+        prev = cur;
+      }
+    });
+    return best;
+  }
+  function moveProbe(P, px, py) {
+    const R = parR(), [u, v] = fromPx(P, R, px, py);
+    S.probe = { u: clamp(u, R.u[0], R.u[1] - 1e-6), v: clamp(v, R.v[0], R.v[1]) };
+    if (S.sel >= 0) {
+      const cv = curve(S.pts[S.sel], S.probe.u);
+      S.probe.v = S.space === "polar360" ? Math.max(0, cv) : cv;
+    }
+  }
+  cPar.addEventListener("pointerdown", e => {
+    const P = panels.par, R = parR(), [px, py] = evPos(P, e);
+    stopPlay();
+    cPar.setPointerCapture(e.pointerId);
+    const onHandle = S.probe && Math.hypot(...toPx(P, R, S.probe.u, S.probe.v).map((a, k) => a - [px, py][k])) < 13;
+    if (!onHandle) {
+      const c = hitCurve(px, py);
+      S.sel = c;
+    }
+    moveProbe(P, px, py);
+    drag = { kind: "probe" };
+    render();
+  });
+  cPar.addEventListener("pointermove", e => {
+    const P = panels.par, [px, py] = evPos(P, e);
+    if (drag && drag.kind === "probe") { moveProbe(P, px, py); render(); return; }
+    const h = hitCurve(px, py);
+    cPar.style.cursor = h >= 0 ? "pointer" : "crosshair";
+    if (h !== S.hover) { S.hover = h; render(); }
+  });
+  cPar.addEventListener("pointerup", () => { drag = null; render(); });
+  cPar.addEventListener("pointercancel", () => { drag = null; });
+  cPar.addEventListener("pointerleave", () => { if (!drag && S.hover !== -1) { S.hover = -1; render(); } });
+  cPar.addEventListener("keydown", e => {
+    if (!S.probe) return;
+    const R = parR(), step = (R.u[1] - R.u[0]) / (e.shiftKey ? 40 : 200);
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.preventDefault(); stopPlay();
+      S.probe.u = clamp(S.probe.u + (e.key === "ArrowRight" ? step : -step), R.u[0], R.u[1] - 1e-6);
+      render();
+    }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { S.sel = -1; stopPlay(); render(); } });
+
+  // ---------- sweep animation ----------
+  let raf = 0, last = 0;
+  function tick(ts) {
+    if (!S.playing) return;
+    const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0; last = ts;
+    const R = parR(), span = R.u[1] - R.u[0];
+    S.probe.u += S.dir * span * 0.18 * dt;
+    if (S.probe.u > R.u[1] - 1e-6) { S.probe.u = R.u[1] - 1e-6; S.dir = -1; }
+    if (S.probe.u < R.u[0]) { S.probe.u = R.u[0]; S.dir = 1; }
+    render();
+    raf = requestAnimationFrame(tick);
+  }
+  function startPlay() {
+    if (!S.pts.length) return;
+    if (S.sel < 0) selectPoint(0);
+    S.playing = true; last = 0; $("bPlay").textContent = T[S.lang].stop;
+    raf = requestAnimationFrame(tick);
+  }
+  function stopPlay() {
+    if (!S.playing) return;
+    S.playing = false; cancelAnimationFrame(raf); $("bPlay").textContent = T[S.lang].play;
+  }
+
+  // ---------- controls ----------
+  function setSpace(sp) {
+    if (sp === S.space) return;
+    const L = currentLine();
+    S.space = sp;
+    S.probe = L ? fromLine(sp, L) : null;
+    if (S.probe) {
+      const R = parR(sp);
+      if (S.probe.u < R.u[0] || S.probe.u > R.u[1]) { S.probe.u = clamp(S.probe.u, R.u[0], R.u[1] - 1e-6); if (S.sel >= 0) { const cv = curve(S.pts[S.sel], S.probe.u); S.probe.v = sp === "polar360" ? Math.max(0, cv) : cv; } }
+    } else if (S.sel >= 0) selectPoint(S.sel);
+    $("spPolar").setAttribute("aria-pressed", sp === "polar");
+    $("spPol360").setAttribute("aria-pressed", sp === "polar360");
+    $("spSlope").setAttribute("aria-pressed", sp === "slope");
+    render();
+  }
+  function setLang(l) {
+    S.lang = l;
+    try { localStorage.setItem("hough-lang", l); } catch (e) {}
+    document.documentElement.lang = l;
+    document.querySelectorAll("[data-t]").forEach(el => { el.textContent = T[l][el.dataset.t]; });
+    $("bPlay").textContent = S.playing ? T[l].stop : T[l].play;
+    $("lgHr").setAttribute("aria-pressed", l === "hr");
+    $("lgEn").setAttribute("aria-pressed", l === "en");
+    render();
+  }
+  $("spPolar").onclick = () => setSpace("polar");
+  $("spPol360").onclick = () => setSpace("polar360");
+  $("spSlope").onclick = () => setSpace("slope");
+  $("lgHr").onclick = () => setLang("hr");
+  $("lgEn").onclick = () => setLang("en");
+  $("bLine").onclick = () => { sampleLine(); render(); };
+  $("bTwo").onclick = () => { stopPlay(); S.pts = []; S.sel = -1; S.probe = null; sampleLine(); sampleLine(); addOutliers(4); render(); };
+  $("bOut").onclick = () => { addOutliers(5); render(); };
+  $("bClear").onclick = () => { stopPlay(); S.pts = []; S.sel = -1; S.probe = null; render(); };
+  $("bPeak").onclick = () => {
+    const acc = accumulator(); if (acc.arg < 0) return;
+    stopPlay();
+    const R = parR(), iu = acc.arg % acc.Nu, iv = Math.floor(acc.arg / acc.Nu);
+    S.sel = -1; S.probe = { u: R.u[0] + (iu + 0.5) * acc.du, v: R.v[0] + (iv + 0.5) * acc.dv };
+    render();
+  };
+  $("bPlay").onclick = () => S.playing ? stopPlay() : startPlay();
+  $("bImgCoords").onclick = () => { S.imgCoords = !S.imgCoords; render(); };
+  $("bAcc").onclick = () => { S.showAcc = !S.showAcc; render(); };
+  const slider = (id, key, fmt) => { const el = $(id); el.oninput = () => { S[key] = +el.value; $(id + "O").textContent = fmt(+el.value); render(); }; };
+  slider("binsU", "binsU", v => v);
+  slider("binsV", "binsV", v => v);
+
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", render);
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  new ResizeObserver(resize).observe(cImg);
+
+  sampleLine(); addOutliers(5);
+  setLang(S.lang);
+  selectPoint(2); S.probe.u = 25;
+  document.fonts && document.fonts.ready.then(render);
+  resize();
+})();
+</script>
+
+</body></html>
